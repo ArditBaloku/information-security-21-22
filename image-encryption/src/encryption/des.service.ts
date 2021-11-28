@@ -11,62 +11,34 @@ export class DesService {
     return this;
   }
 
-  encrypt(text: string, key: string, iv: string = null): string {
-    if (this.mode === 'ecb') return this.encryptEcb(text, key);
-
-    return this.encryptCbc(text, key, iv);
-  }
-
-  decrypt(text: string, key: string, iv: string = null): string {
-    if (this.mode === 'ecb') return this.decryptEcb(text, key);
-
-    return this.decryptCbc(text, key, iv);
-  }
-
-  private encryptEcb(text: string, key: string): string {
+  encrypt(text: string, key: string): string {
+    const iv = this.mode === 'ecb' ? null : crypto.randomBytes(8);
     const cipher = crypto.createCipheriv(
-      'des-ecb',
+      `des-${this.mode}`,
       Buffer.from(key, 'hex'),
-      null,
+      iv,
     );
 
     let encrypted = cipher.update(text, 'utf-8', 'hex');
     encrypted += cipher.final('hex');
-    return encrypted;
+
+    return (iv?.toString('hex') ?? '') + encrypted;
   }
 
-  private encryptCbc(text: string, key: string, iv: string): string {
-    const cipher = crypto.createCipheriv(
-      'des-cbc',
-      Buffer.from(key, 'hex'),
-      Buffer.from(iv, 'hex'),
-    );
-
-    let encrypted = cipher.update(text, 'utf-8', 'hex');
-    encrypted += cipher.final('hex');
-    return encrypted;
-  }
-
-  private decryptCbc(text: string, key: string, iv: string): string {
+  decrypt(text: string, key: string): string {
     const decipher = crypto.createDecipheriv(
-      'des-cbc',
+      `des-${this.mode}`,
       Buffer.from(key, 'hex'),
-      Buffer.from(iv, 'hex'),
+      this.mode === 'ecb' ? null : Buffer.from(text.slice(0, 16), 'hex'),
     );
 
-    let decrypted = decipher.update(text, 'hex', 'utf-8');
-    decrypted += decipher.final('utf-8');
-    return decrypted;
-  }
-
-  private decryptEcb(text: string, key: string): string {
-    const decipher = crypto.createDecipheriv(
-      'des-ecb',
-      Buffer.from(key, 'hex'),
-      null,
+    let decrypted = decipher.update(
+      this.mode === 'ecb' ? text : text.slice(16),
+      'hex',
+      'utf-8',
     );
-    let decrypted = decipher.update(text, 'hex', 'utf-8');
     decrypted += decipher.final('utf-8');
+
     return decrypted;
   }
 }

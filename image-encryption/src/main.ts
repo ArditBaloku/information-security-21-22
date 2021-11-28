@@ -11,12 +11,11 @@ async function bootstrap() {
   const desService = app.get(DesService);
   desService.setMode('cbc');
 
-  const iv = crypto.randomBytes(8).toString('hex');
   const key = crypto.randomBytes(8).toString('hex');
 
-  const encrypted = desService.encrypt('Some random text to encrypt', key, iv);
+  const encrypted = desService.encrypt('Some random text to encrypt', key);
   console.log(encrypted);
-  console.log(desService.decrypt(encrypted, key, iv));
+  console.log(desService.decrypt(encrypted, key));
 
   desService.setMode('ecb');
   const encrypted2 = desService.encrypt('Some random text to encrypt', key);
