@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 
-type EncryptionMode = 'ecb' | 'cbc';
+export type EncryptionMode = 'ecb' | 'cbc';
 @Injectable()
 export class DesService {
   private mode: EncryptionMode = 'ecb';
