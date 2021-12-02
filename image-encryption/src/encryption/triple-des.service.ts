@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { EncryptionMode } from './des.service';
+import { IEncryptor } from './encryptor.interface';
 
 @Injectable()
-export class TripleDesService {
+export class TripleDesService implements IEncryptor {
   private mode: EncryptionMode = 'ecb';
 
   setMode(mode: EncryptionMode): TripleDesService {

@@ -26,6 +26,29 @@ async function bootstrap() {
     .nargs('k', 1)
     .describe('k', 'The key to use')
     .demandOption(['m', 'k', 'a'])
+    .check((argv, options) => {
+      if (typeof argv._[1] !== 'string') {
+        throw new Error('Invalid path');
+      }
+
+      if (path.extname(argv._[1]) !== '.jpg') {
+        throw new Error('Sorry, only jpgs are supported right now');
+      }
+
+      if (argv.a === '3des' && (argv.k as string).length !== 32) {
+        throw new Error(
+          'Invalid key length. Please provide a 16 byte key in hex characters',
+        );
+      }
+
+      if (argv.a === 'des' && (argv.k as string).length !== 16) {
+        throw new Error(
+          'Invalid key length. Please provide an 8 byte key in hex characters',
+        );
+      }
+
+      return true;
+    })
     .example(
       'nest start -- encrypt ./photo.jpg --mode ecb --algorithm des -k ffffffffffffffff',
       'Encrypt using ecb des',
@@ -38,51 +61,18 @@ async function bootstrap() {
     .alias('h', 'help').argv;
 
   const command = argv._[0];
-  const imagePath = argv._[1];
+  const imagePath = argv._[1] as string;
   const encryptionMode = argv.m as EncryptionMode;
   const key = argv.k as string;
 
-  if (typeof imagePath !== 'string') {
-    console.log('Invalid path');
-    return;
-  }
-
-  if (path.extname(imagePath) !== '.jpg') {
-    console.log('Sorry, only jpgs are supported right now');
-    return;
-  }
-
-  if (argv.a === '3des' && key.length !== 32) {
-    console.log(
-      'Invalid key length. Please provide a 16 byte key in hex characters',
-    );
-    return;
-  }
-
-  if (argv.a === 'des' && key.length !== 16) {
-    console.log(
-      'Invalid key length. Please provide an 8 byte key in hex characters',
-    );
-    return;
-  }
-
-  // naive setup, improve with interfaces
-  if (argv.a === 'des') {
-    const desService = app.get(DesService);
-    desService.setMode(encryptionMode);
-    const result =
-      command === 'encrypt'
-        ? desService.encrypt(imagePath, key)
-        : desService.decrypt(imagePath, key);
-    console.log(result);
-  } else if (argv.a === '3des') {
-    const tripleDesService = app.get(TripleDesService);
-    tripleDesService.setMode(encryptionMode);
-    const result =
-      command === 'encrypt'
-        ? tripleDesService.encrypt(imagePath, key)
-        : tripleDesService.decrypt(imagePath, key);
-    console.log(result);
-  }
+  const encryptionServiceType =
+    argv.a === 'des' ? DesService : TripleDesService;
+  const encryptionService = app.get(encryptionServiceType);
+  encryptionService.setMode(encryptionMode);
+  const result =
+    command === 'encrypt'
+      ? encryptionService.encrypt(imagePath, key)
+      : encryptionService.decrypt(imagePath, key);
+  console.log(result);
 }
 bootstrap();
