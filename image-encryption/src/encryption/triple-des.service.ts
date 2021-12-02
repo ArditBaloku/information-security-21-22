@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { EncryptionMode } from './des.service';
 import { IEncryptor } from './encryptor.interface';
 
-export type EncryptionMode = 'ecb' | 'cbc';
 @Injectable()
-export class DesService implements IEncryptor {
+export class TripleDesService implements IEncryptor {
   private mode: EncryptionMode = 'ecb';
 
-  setMode(mode: EncryptionMode): DesService {
+  setMode(mode: EncryptionMode): TripleDesService {
     this.mode = mode;
     return this;
   }
@@ -15,7 +15,7 @@ export class DesService implements IEncryptor {
   encrypt(text: string, key: string): string {
     const iv = this.mode === 'ecb' ? null : crypto.randomBytes(8);
     const cipher = crypto.createCipheriv(
-      `des-${this.mode}`,
+      `des-ede-${this.mode}`,
       Buffer.from(key, 'hex'),
       iv,
     );
@@ -28,7 +28,7 @@ export class DesService implements IEncryptor {
 
   decrypt(text: string, key: string): string {
     const decipher = crypto.createDecipheriv(
-      `des-${this.mode}`,
+      `des-ede-${this.mode}`,
       Buffer.from(key, 'hex'),
       this.mode === 'ecb' ? null : Buffer.from(text.slice(0, 16), 'hex'),
     );

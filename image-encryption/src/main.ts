@@ -1,25 +1,78 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { DesService } from './encryption/des.service';
-import * as crypto from 'crypto';
+import { DesService, EncryptionMode } from './encryption/des.service';
+import * as yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
+import * as path from 'path';
+import { TripleDesService } from './encryption/triple-des.service';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: false,
   });
 
-  const desService = app.get(DesService);
-  desService.setMode('cbc');
+  const argv = yargs(hideBin(process.argv))
+    .command('encrypt', 'Encrypt an image')
+    .command('decrypt', 'Decrypt an image')
+    .alias('m', 'mode')
+    .nargs('m', 1)
+    .describe('m', 'Pick mode to use')
+    .choices('m', ['ecb', 'cbc'])
+    .alias('a', 'algorithm')
+    .nargs('a', 1)
+    .describe('a', 'Algorithm to use')
+    .choices('a', ['des', '3des'])
+    .alias('k', 'key')
+    .nargs('k', 1)
+    .describe('k', 'The key to use')
+    .demandOption(['m', 'k', 'a'])
+    .check((argv, options) => {
+      if (typeof argv._[1] !== 'string') {
+        throw new Error('Invalid path');
+      }
 
-  const key = crypto.randomBytes(8).toString('hex');
+      if (path.extname(argv._[1]) !== '.jpg') {
+        throw new Error('Sorry, only jpgs are supported right now');
+      }
 
-  const encrypted = desService.encrypt('Some random text to encrypt', key);
-  console.log(encrypted);
-  console.log(desService.decrypt(encrypted, key));
+      if (argv.a === '3des' && (argv.k as string).length !== 32) {
+        throw new Error(
+          'Invalid key length. Please provide a 16 byte key in hex characters',
+        );
+      }
 
-  desService.setMode('ecb');
-  const encrypted2 = desService.encrypt('Some random text to encrypt', key);
-  console.log(encrypted2);
-  console.log(desService.decrypt(encrypted2, key));
+      if (argv.a === 'des' && (argv.k as string).length !== 16) {
+        throw new Error(
+          'Invalid key length. Please provide an 8 byte key in hex characters',
+        );
+      }
+
+      return true;
+    })
+    .example(
+      'nest start -- encrypt ./photo.jpg --mode ecb --algorithm des -k ffffffffffffffff',
+      'Encrypt using ecb des',
+    )
+    .example(
+      'nest start -- decrypt ./photo.jpg -m cbc -a 3des -k 0000000000000000 ffffffffffffffff',
+      'Decrypt using cbc 3des',
+    )
+    .help('h')
+    .alias('h', 'help').argv;
+
+  const command = argv._[0];
+  const imagePath = argv._[1] as string;
+  const encryptionMode = argv.m as EncryptionMode;
+  const key = argv.k as string;
+
+  const encryptionServiceType =
+    argv.a === 'des' ? DesService : TripleDesService;
+  const encryptionService = app.get(encryptionServiceType);
+  encryptionService.setMode(encryptionMode);
+  const result =
+    command === 'encrypt'
+      ? encryptionService.encrypt(imagePath, key)
+      : encryptionService.decrypt(imagePath, key);
+  console.log(result);
 }
 bootstrap();
