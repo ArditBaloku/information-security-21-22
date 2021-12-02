@@ -4,6 +4,7 @@ import { DesService, EncryptionMode } from './encryption/des.service';
 import * as yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as path from 'path';
+import { TripleDesService } from './encryption/triple-des.service';
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule, {
@@ -22,7 +23,7 @@ async function bootstrap() {
     .describe('a', 'Algorithm to use')
     .choices('a', ['des', '3des'])
     .alias('k', 'key')
-    .array('k')
+    .nargs('k', 1)
     .describe('k', 'The key to use')
     .demandOption(['m', 'k', 'a'])
     .example(
@@ -39,7 +40,7 @@ async function bootstrap() {
   const command = argv._[0];
   const imagePath = argv._[1];
   const encryptionMode = argv.m as EncryptionMode;
-  const [key1, key2] = argv.k;
+  const key = argv.k as string;
 
   if (typeof imagePath !== 'string') {
     console.log('Invalid path');
@@ -51,8 +52,17 @@ async function bootstrap() {
     return;
   }
 
-  if (argv.a === '3des' && argv.k.length !== 2) {
-    console.log('Invalid number of keys');
+  if (argv.a === '3des' && key.length !== 32) {
+    console.log(
+      'Invalid key length. Please provide a 16 byte key in hex characters',
+    );
+    return;
+  }
+
+  if (argv.a === 'des' && key.length !== 16) {
+    console.log(
+      'Invalid key length. Please provide an 8 byte key in hex characters',
+    );
     return;
   }
 
@@ -62,17 +72,17 @@ async function bootstrap() {
     desService.setMode(encryptionMode);
     const result =
       command === 'encrypt'
-        ? desService.encrypt('image here', key1 as string)
-        : desService.decrypt('image here', key2 as string);
+        ? desService.encrypt(imagePath, key)
+        : desService.decrypt(imagePath, key);
     console.log(result);
   } else if (argv.a === '3des') {
-    // const 3desService = app.get(TripleDesService);
-    // const 3desService.setMode(encryptionMode);\
-    // const result =
-    //   command === 'encrypt'
-    //     ? 3desService.encrypt('image here', key1 as string, key2 as string)
-    //     : 3desService.decrypt('image here', key1 as string, key2 as string);
-    // console.log(result);
+    const tripleDesService = app.get(TripleDesService);
+    tripleDesService.setMode(encryptionMode);
+    const result =
+      command === 'encrypt'
+        ? tripleDesService.encrypt(imagePath, key)
+        : tripleDesService.decrypt(imagePath, key);
+    console.log(result);
   }
 }
 bootstrap();
