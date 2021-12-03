@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { DesService } from 'src/encryption/des.service';
+import { EncryptionModule } from 'src/encryption/encryption.module';
 import { ImageService } from './image.service';
 
 @Module({
-  imports: [DesService],
+  imports: [EncryptionModule],
   providers: [ImageService],
   exports: [ImageService],
 })
-export class ImageModule { }
+export class ImageModule {}
