@@ -52,7 +52,6 @@ export class ImageService {
   }
 
   async encryptTripleDes(path: string, key: string, mode: string) {
-    console.log('encryption by 3des' + path);
     const data = await this.load(path);
     const header = data.subarray(0, 54);
     const tail = data.subarray(54).toString('hex');
@@ -67,7 +66,6 @@ export class ImageService {
   }
 
   async decryptTripleDes(path: string, key: string, mode: string) {
-    console.log('decryption by 3des');
     const data = await this.load(path);
     const header = data.subarray(0, 54);
     const tail = data.subarray(54).toString('hex');
