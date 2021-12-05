@@ -8,7 +8,9 @@ import { TripleDesService } from './encryption/triple-des.service';
 import { ImageService } from './image/image.service';
 
 async function bootstrap() {
-  const app = await NestFactory.createApplicationContext(AppModule);
+  const app = await NestFactory.createApplicationContext(AppModule, {
+    logger: false,
+  });
 
   const argv = yargs(hideBin(process.argv))
     .command('encrypt', 'Encrypt an image')
@@ -70,10 +72,19 @@ async function bootstrap() {
   const imageService = app.get(ImageService);
 
   encryptionService.setMode(encryptionMode);
-  command === 'encrypt'
-    ? argv.a === 'des' ? await imageService.encrypt(imagePath, key, encryptionMode) :
-      await imageService.encryptTripleDes(imagePath, key, encryptionMode)
-    : argv.a === 'des' ? await imageService.decrypt(imagePath, key, encryptionMode) :
-      await imageService.decryptTripleDes(imagePath, key, encryptionMode);
+
+  try {
+    if (command === 'encrypt') {
+      argv.a === 'des'
+        ? await imageService.encrypt(imagePath, key, encryptionMode)
+        : await imageService.encryptTripleDes(imagePath, key, encryptionMode);
+    } else {
+      argv.a === 'des'
+        ? await imageService.decrypt(imagePath, key, encryptionMode)
+        : await imageService.decryptTripleDes(imagePath, key, encryptionMode);
+    }
+  } catch (e) {
+    console.log('Something went wrong');
+  }
 }
 bootstrap();
