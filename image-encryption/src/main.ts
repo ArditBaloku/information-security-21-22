@@ -5,11 +5,10 @@ import * as yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import * as path from 'path';
 import { TripleDesService } from './encryption/triple-des.service';
+import { ImageService } from './image/image.service';
 
 async function bootstrap() {
-  const app = await NestFactory.createApplicationContext(AppModule, {
-    logger: false,
-  });
+  const app = await NestFactory.createApplicationContext(AppModule);
 
   const argv = yargs(hideBin(process.argv))
     .command('encrypt', 'Encrypt an image')
@@ -31,8 +30,8 @@ async function bootstrap() {
         throw new Error('Invalid path');
       }
 
-      if (path.extname(argv._[1]) !== '.jpg') {
-        throw new Error('Sorry, only jpgs are supported right now');
+      if (path.extname(argv._[1]) !== '.bmp') {
+        throw new Error('Sorry, only bmp are supported right now');
       }
 
       if (argv.a === '3des' && (argv.k as string).length !== 32) {
@@ -68,11 +67,13 @@ async function bootstrap() {
   const encryptionServiceType =
     argv.a === 'des' ? DesService : TripleDesService;
   const encryptionService = app.get(encryptionServiceType);
+  const imageService = app.get(ImageService);
+
   encryptionService.setMode(encryptionMode);
-  const result =
-    command === 'encrypt'
-      ? encryptionService.encrypt(imagePath, key)
-      : encryptionService.decrypt(imagePath, key);
-  console.log(result);
+  command === 'encrypt'
+    ? argv.a === 'des' ? await imageService.encrypt(imagePath, key, encryptionMode) :
+      await imageService.encryptTripleDes(imagePath, key, encryptionMode)
+    : argv.a === 'des' ? await imageService.decrypt(imagePath, key, encryptionMode) :
+      await imageService.decryptTripleDes(imagePath, key, encryptionMode);
 }
 bootstrap();
