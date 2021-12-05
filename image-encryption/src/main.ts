@@ -51,11 +51,11 @@ async function bootstrap() {
       return true;
     })
     .example(
-      'nest start -- encrypt ./photo.jpg --mode ecb --algorithm des -k ffffffffffffffff',
+      'nest start -- encrypt ./circle.bmp --mode ecb --algorithm des -k ffffffffffffffff',
       'Encrypt using ecb des',
     )
     .example(
-      'nest start -- decrypt ./photo.jpg -m cbc -a 3des -k 0000000000000000 ffffffffffffffff',
+      'nest start -- decrypt ./circle.bmp -m cbc -a 3des -k 0000000000000000ffffffffffffffff',
       'Decrypt using cbc 3des',
     )
     .help('h')
