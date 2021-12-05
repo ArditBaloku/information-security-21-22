@@ -71,7 +71,9 @@ async function bootstrap() {
 
   encryptionService.setMode(encryptionMode);
   command === 'encrypt'
-    ? await imageService.encrypt(imagePath, key)
-    : await imageService.decrypt(imagePath, key);
+    ? argv.a === 'des' ? await imageService.encrypt(imagePath, key, encryptionMode) :
+      await imageService.encryptTripleDes(imagePath, key, encryptionMode)
+    : argv.a === 'des' ? await imageService.decrypt(imagePath, key, encryptionMode) :
+      await imageService.decryptTripleDes(imagePath, key, encryptionMode);
 }
 bootstrap();

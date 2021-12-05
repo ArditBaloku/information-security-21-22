@@ -8,7 +8,7 @@ export class ImageService {
   constructor(
     private readonly desService: DesService,
     private readonly tripleDesService: TripleDesService,
-  ) {}
+  ) { }
 
   async load(path: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {
@@ -22,51 +22,63 @@ export class ImageService {
     });
   }
 
-  async encrypt(path: string, key: string) {
+  async encrypt(path: string, key: string, mode: string) {
     const data = await this.load(path);
     const header = data.subarray(0, 54);
     const tail = data.subarray(54).toString('hex');
+    const imgName = (path.split('\\').pop().split('/').pop().split('.'))[0];
+    const nameAfterEncryption = imgName + '-encrypted-des-' + mode + '.bmp';
 
     const encryptedImage = this.desService.encrypt(tail, key);
     await this.write(
       Buffer.concat([header, Buffer.from(encryptedImage, 'hex')]),
-      './encrypted-snail.bmp',
+      './' + nameAfterEncryption,
     );
   }
 
-  async decrypt(path: string, key: string) {
+  async decrypt(path: string, key: string, mode: string) {
     const data = await this.load(path);
     const header = data.subarray(0, 54);
     const tail = data.subarray(54).toString('hex');
+    const imgName = (path.split('\\').pop().split('/').pop().split('.'))[0];
+    const imageShortName = imgName.substr(0, imgName.indexOf('-'));
+    const nameAfterDecryption = imageShortName + '-decrypted-des-' + mode + '.bmp';
 
     const decryptedImage = this.desService.decrypt(tail, key);
     await this.write(
       Buffer.concat([header, Buffer.from(decryptedImage, 'hex')]),
-      './decrypted-snail.bmp',
+      './' + nameAfterDecryption,
     );
   }
 
-  async encryptTripleDes(path: string, key: string) {
+  async encryptTripleDes(path: string, key: string, mode: string) {
+    console.log('encryption by 3des' + path);
     const data = await this.load(path);
     const header = data.subarray(0, 54);
     const tail = data.subarray(54).toString('hex');
+    const imgName = (path.split('\\').pop().split('/').pop().split('.'))[0];
+    const nameAfterEncryption = imgName + '-encrypted-3des-' + mode + '.bmp';
 
     const encryptedImage = this.tripleDesService.encrypt(tail, key);
     await this.write(
       Buffer.concat([header, Buffer.from(encryptedImage, 'hex')]),
-      './encrypted-snail.bmp',
+      './' + nameAfterEncryption,
     );
   }
 
-  async decryptTripleDes(path: string, key: string) {
+  async decryptTripleDes(path: string, key: string, mode: string) {
+    console.log('decryption by 3des');
     const data = await this.load(path);
     const header = data.subarray(0, 54);
     const tail = data.subarray(54).toString('hex');
+    const imgName = (path.split('\\').pop().split('/').pop().split('.'))[0];
+    const imageShortName = imgName.substr(0, imgName.indexOf('-'));
+    const nameAfterDecryption = imageShortName + '-decrypted-3des-' + mode + '.bmp';
 
     const decryptedImage = this.tripleDesService.decrypt(tail, key);
     await this.write(
       Buffer.concat([header, Buffer.from(decryptedImage, 'hex')]),
-      './decrypted-snail.bmp',
+      './' + nameAfterDecryption,
     );
   }
 
